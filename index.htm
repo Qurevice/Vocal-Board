@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocal Pedalboard</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: radial-gradient(circle at 50% 0%, #232323 0%, #0a0a0a 70%), #080808;
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px 20px; font-family: 'Segoe UI', Arial, sans-serif;
+    color: #eee; user-select: none;
+  }
+
+  /* ===== ПАНЕЛИ ВХОДА И ЗАПИСИ ===== */
+  .input-panel {
+    position: fixed; top: 18px; left: 18px; width: 250px;
+    background: linear-gradient(180deg, #1c1c1c, #101010);
+    border: 2px solid #c9a227; border-radius: 10px; padding: 14px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.85), inset 0 0 20px rgba(0,0,0,.6);
+    z-index: 100;
+  }
+  .ip-title { font-size: 11px; letter-spacing: 2px; color: #c9a227; font-weight: 700; margin-bottom: 10px; text-align: center; }
+  .input-panel select {
+    width: 100%; padding: 8px 6px; background: #0b0b0b; color: #e8dcc0;
+    border: 1px solid #3a3a3a; border-radius: 5px; font-size: 12px; outline: none; cursor: pointer;
+  }
+  .input-panel select:focus { border-color: #c9a227; }
+  .ip-row { display: flex; gap: 8px; margin-top: 10px; }
+  .ip-row button {
+    flex: 1; padding: 9px 6px; border-radius: 5px; border: 1px solid #3a3a3a;
+    background: linear-gradient(180deg, #2a2a2a, #171717); color: #ddd;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: .15s;
+  }
+  .ip-row button:hover { background: linear-gradient(180deg, #383838, #202020); }
+  .ip-row button#refreshBtn { flex: 0 0 42px; font-size: 15px; }
+  .ip-row button.power { background: linear-gradient(180deg, #3a1010, #200808); border-color: #6b1a1a; color: #ff8a8a; }
+  .ip-row button.power.on { background: linear-gradient(180deg, #0f3a15, #08200a); border-color: #1f7a2c; color: #7dff9a; box-shadow: 0 0 14px rgba(60,255,110,.35); }
+  .ip-status { margin-top: 12px; display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 1px; color: #888; }
+  .led { width: 10px; height: 10px; border-radius: 50%; background: #400; box-shadow: inset 0 0 3px #000; transition: .2s; }
+  .led.on { background: #39ff6a; box-shadow: 0 0 10px #39ff6a, inset 0 0 3px #fff; }
+
+  .rec-panel {
+    position: fixed; top: 18px; right: 18px; width: 250px;
+    background: linear-gradient(180deg, #1c1c1c, #101010);
+    border: 2px solid #6b1a1a; border-radius: 10px; padding: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.85), inset 0 0 20px rgba(0,0,0,.6);
+    z-index: 100; font-size: 11px;
+  }
+  .rec-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .rec-btn {
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid #6b1a1a;
+    background: radial-gradient(circle at 35% 30%, #ff5a5a, #a80f0f 70%, #5a0000);
+    cursor: pointer; padding: 0; flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(255,60,60,.5), inset 0 1px 2px rgba(255,255,255,.4); transition: .2s;
+  }
+  .rec-btn:hover { box-shadow: 0 0 14px rgba(255,60,60,.9); }
+  .rec-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .rec-btn.recording { animation: recPulse 1s infinite; background: radial-gradient(circle at 35% 30%, #ff8080, #ff1a1a 70%, #8a0000); }
+  @keyframes recPulse { 0%,100% { box-shadow: 0 0 8px rgba(255,60,60,.6); } 50% { box-shadow: 0 0 22px rgba(255,60,60,1), 0 0 34px rgba(255,60,60,.6); } }
+  .folder-btn {
+    width: 24px; height: 24px; border-radius: 50%; border: 1px solid #3a3a3a;
+    background: linear-gradient(180deg, #2a2a2a, #171717); color: #c9a227;
+    cursor: pointer; font-size: 15px; font-weight: 700; padding: 0; line-height: 1; flex-shrink: 0;
+  }
+  .folder-btn:hover { background: linear-gradient(180deg, #383838, #202020); color: #ffd74a; }
+  .folder-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .rec-folder { flex: 1; font-size: 9px; color: #888; letter-spacing: .5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+  .rec-body { display: none; }
+  .rec-body.active { display: block; }
+  .rec-timer { font-family: 'Courier New', monospace; font-size: 18px; font-weight: 700; color: #ff5a5a; text-align: center; letter-spacing: 2px; margin: 2px 0 6px; }
+  .rec-wave { width: 100%; height: 60px; display: block; background: #050505; border: 1px solid #000; border-radius: 4px; }
+  .rec-status { font-size: 9px; color: #888; text-align: center; margin-top: 6px; min-height: 12px; }
+
+  /* =====================================================
+     ФЛАЙТ-КЕЙС (PEDALBOARD)
+     ===================================================== */
+  .pedalboard-case {
+    width: 1040px; max-width: 100%;
+    background: #111;
+    border: 12px solid #b0b0b0;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 
+      0 30px 80px rgba(0,0,0,0.9),
+      inset 0 0 50px rgba(0,0,0,0.8),
+      0 0 0 4px #222,
+      0 0 0 6px #888;
+    position: relative;
+  }
+  
+  .pedalboard-case::before, .pedalboard-case::after {
+    content: ''; position: absolute; width: 40px; height: 40px;
+    border: 4px solid #ccc; border-radius: 6px; pointer-events: none;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 2px 5px rgba(0,0,0,0.5);
+  }
+  .pedalboard-case::before { top: -8px; left: -8px; border-right: none; border-bottom: none; }
+  .pedalboard-case::after { bottom: -8px; right: -8px; border-left: none; border-top: none; }
+
+  .pedalboard-inner {
+    background: repeating-linear-gradient(45deg, #151515 0 2px, #0a0a0a 2px 4px);
+    border-radius: 6px;
+    padding: 20px;
+    display: flex;
+    flex-direction: row; /* Горизонтальное расположение по умолчанию */
+    gap: 16px;
+    justify-content: center;
+    align-items: flex-end;
+    flex-wrap: wrap; /* Позволяет переноситься, если не влезает */
+    border: 1px solid #333;
+    box-shadow: inset 0 5px 15px rgba(0,0,0,0.9);
+  }
+
+  /* =====================================================
+     ОБЩИЙ СТИЛЬ ПЕДАЛИ (МЕТАЛЛИЧЕСКИЙ БЛЕСК)
+     ===================================================== */
+  .pedal {
+    width: 230px;
+    border-radius: 8px;
+    padding: 12px 12px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden; /* Для блика */
+    box-shadow: 
+      0 10px 20px rgba(0,0,0,0.6),
+      inset 0 2px 2px rgba(255,255,255,0.4), /* Верхний блик */
+      inset 0 -4px 8px rgba(0,0,0,0.6);      /* Тень снизу */
+    border: 2px solid #111;
+    transition: filter 0.2s;
+  }
+  
+  /* Глянцевый отблеск */
+  .pedal::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 45%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
+    pointer-events: none; z-index: 1;
+  }
+
+  .pedal.off { filter: grayscale(0.9) brightness(0.6); }
+
+  /* Цвета педалей (с градиентом для металла) */
+  .pedal-eq { background: linear-gradient(to bottom, #66bb6a 0%, #388e3c 20%, #1b5e20 100%); }
+  .pedal-comp { background: linear-gradient(to bottom, #ef5350 0%, #d32f2f 20%, #b71c1c 100%); }
+  .pedal-delay { background: linear-gradient(to bottom, #ffa726 0%, #f57c00 20%, #e65100 100%); }
+  .pedal-reverb { background: linear-gradient(to bottom, #ab47bc 0%, #8e24aa 20%, #4a148c 100%); }
+
+  .pedal-title {
+    font-size: 14px; font-weight: 900; letter-spacing: 2px; color: #fff;
+    margin-bottom: 12px; text-transform: uppercase; z-index: 2;
+  }
+  .pedal-subtitle {
+    font-size: 8px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,0.8);
+    margin-top: -10px; margin-bottom: 10px; z-index: 2;
+  }
+
+  .pedal-controls {
+    width: 100%; display: flex; justify-content: space-around; align-items: flex-start; margin-bottom: 15px; z-index: 2;
+  }
+  .pedal-switch-row {
+    display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; width: 100%; z-index: 2;
+  }
+  .pedal-toggle {
+    background: #111; border: 1px solid #000; color: #666;
+    font-size: 9px; font-weight: 700; padding: 4px 8px; border-radius: 4px;
+    cursor: pointer; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8); transition: 0.15s;
+  }
+  .pedal-toggle.active {
+    background: #eee; color: #111; box-shadow: 0 0 10px rgba(255,255,255,0.4); border-color: #fff;
+  }
+
+  /* =====================================================
+     НАЖИМНАЯ ПЛАСТИНА (BOSS-STYLE)
+     ===================================================== */
+  .footswitch {
+    width: 80px; 
+    height: 50px;
+    background: linear-gradient(to bottom, #f0f0f0 0%, #999 100%);
+    border: 2px solid #111;
+    border-radius: 6px;
+    position: relative;
+    cursor: pointer;
+    margin-top: auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.8);
+    transition: transform 0.05s, box-shadow 0.05s;
+    z-index: 2;
+  }
+  
+  /* Черная резиновая накладка */
+  .footswitch::after {
+    content: ''; position: absolute;
+    top: 6px; left: 8px; right: 8px; bottom: 10px;
+    background: #151515;
+    border-radius: 3px;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.9);
+  }
+
+  /* Петля снизу */
+  .footswitch::before {
+    content: ''; position: absolute;
+    bottom: -2px; left: 10%; right: 10%; height: 6px;
+    background: linear-gradient(to right, #666, #ddd, #666);
+    border-radius: 2px;
+    border: 1px solid #000;
+    z-index: 3;
+  }
+
+  .footswitch:active {
+    transform: translateY(2px); /* Эффект нажатия */
+    box-shadow: 0 2px 3px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.4);
+  }
+
+  /* Индикатор педали */
+  .pedal-led {
+    position: absolute; top: 12px; right: 12px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #300; border: 1px solid #000;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8); transition: 0.2s; z-index: 2;
+  }
+  .pedal:not(.off) .pedal-led {
+    background: #ff3333; box-shadow: 0 0 12px #ff3333, inset 0 0 2px #fff;
+  }
+
+  /* Крутилки */
+  .knob-container { display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 2; }
+  .knob {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff 0%, #bbb 40%, #333 100%);
+    border: 2px solid #111; box-shadow: 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.5);
+    position: relative; cursor: ns-resize; touch-action: none;
+  }
+  .knob::after {
+    content: ''; position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 12px; background: #111; border-radius: 2px;
+  }
+  .knob-label { font-size: 9px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+
+  /* =====================================================
+     СПЕЦИФИКАЦИЯ ПЕДАЛЕЙ
+     ===================================================== */
+  /* 1. EQ */
+  .eq-sliders {
+    display: flex; justify-content: space-between; width: 100%; height: 100px; padding: 0 4px; z-index: 2;
+  }
+  .eq-sliders input[type="range"] {
+    -webkit-appearance: slider-vertical;
+    appearance: slider-vertical;
+    width: 10px; height: 100%; background: transparent; outline: none; cursor: pointer;
+  }
+  .eq-sliders input[type="range"]::-webkit-slider-runnable-track {
+    width: 6px; background: #111; border-radius: 3px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+  }
+  .eq-sliders input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 8px; background: #eee; border-radius: 2px;
+    margin-left: -4px; box-shadow: 0 1px 3px rgba(0,0,0,0.8); border: 1px solid #000;
+  }
+  .eq-labels { display: flex; justify-content: space-between; width: 100%; padding: 0 2px; margin-top: 4px; z-index: 2; }
+  .eq-labels span { font-size: 7px; color: rgba(255,255,255,0.7); font-weight: 700; }
+
+  /* 2. Compressor */
+  .comp-vu {
+    width: 80%; height: 20px; background: #111; border-radius: 3px; border: 1px solid #000;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8); margin-bottom: 15px; position: relative; overflow: hidden; z-index: 2;
+  }
+  .comp-vu-bar {
+    position: absolute; top: 0; left: 0; height: 100%; width: 0%;
+    background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336); transition: width 0.05s;
+  }
+
+  /* 3. Delay */
+  .tap-btn-pedal {
+    background: #222; border: 2px solid #111; color: #fff; font-size: 10px; font-weight: 700;
+    padding: 6px 12px; border-radius: 4px; cursor: pointer; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+    margin-top: 10px; transition: 0.1s; z-index: 2;
+  }
+  .tap-btn-pedal:active { transform: scale(0.95); box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+
+  /* 4. Reverb */
+  .rev-toggle-row { display: flex; gap: 4px; justify-content: center; margin-bottom: 10px; z-index: 2; }
+  .rev-toggle-row button {
+    font-size: 8px; padding: 4px 6px; background: #222; border: 1px solid #111; color: #888;
+    border-radius: 3px; cursor: pointer; font-weight: 700;
+  }
+  .rev-toggle-row button.active { background: #eee; color: #111; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
+
+  /* =====================================================
+     МОБИЛЬНАЯ АДАПТАЦИЯ (ВЕРТИКАЛЬНЫЙ РЯД)
+     ===================================================== */
+  @media (max-width: 1050px) {
+    .pedalboard-case { padding: 10px; border-width: 8px; }
+    .pedalboard-inner { 
+      flex-direction: column; 
+      align-items: center; 
+      padding: 10px; 
+    }
+    .pedal { 
+      width: 100%; 
+      max-width: 320px; 
+      margin-bottom: 10px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ПАНЕЛЬ ВХОДА -->
+<div class="input-panel">
+  <div class="ip-title">VOCAL INPUT</div>
+  <select id="deviceSelect"></select>
+  <div class="ip-row">
+    <button id="refreshBtn" title="Обновить список">⟳</button>
+    <button id="powerBtn" class="power">POWER ON</button>
+  </div>
+  <div class="ip-status">
+    <span class="led" id="led"></span>
+    <span id="statusText">ВЫКЛЮЧЕН</span>
+  </div>
+</div>
+
+<!-- ПАНЕЛЬ ЗАПИСИ -->
+<div class="rec-panel">
+  <div class="rec-header">
+    <button class="rec-btn" id="recBtn" title="Запись"></button>
+    <button class="folder-btn" id="folderBtn" title="Выбрать папку">+</button>
+    <span class="rec-folder" id="recFolder">папка не выбрана</span>
+  </div>
+  <div class="rec-body" id="recBody">
+    <div class="rec-timer" id="recTimer">00:00</div>
+    <canvas class="rec-wave" id="recWave" width="440" height="120"></canvas>
+  </div>
+  <div class="rec-status" id="recStatus"></div>
+</div>
+
+<!-- ПЕДАЛБОРД -->
+<div class="pedalboard-case">
+  <div class="pedalboard-inner">
+    
+    <!-- 1. EQ PEDAL -->
+    <div class="pedal pedal-eq" id="pedal-eq">
+      <div class="pedal-led"></div>
+      <div class="pedal-title">EQ</div>
+      <div class="pedal-subtitle">10-BAND PARAMETRIC</div>
+      
+      <div class="eq-sliders">
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="31" data-eq>
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="62" data-eq>
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="125" data-eq>
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="250" data-eq>
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="500" data-eq>
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="1000" data-eq>
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="2000" data-eq>
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="4000" data-eq>
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="8000" data-eq>
+        <input type="range" min="-12" max="12" value="0" step="1" data-freq="16000" data-eq>
+      </div>
+      <div class="eq-labels">
+        <span>31</span><span>62</span><span>125</span><span>250</span><span>500</span>
+        <span>1k</span><span>2k</span><span>4k</span><span>8k</span><span>16k</span>
+      </div>
+
+      <button class="footswitch" data-target="eq"></button>
+    </div>
+
+    <!-- 2. COMPRESSOR PEDAL -->
+    <div class="pedal pedal-comp" id="pedal-comp">
+      <div class="pedal-led"></div>
+      <div class="pedal-title">COMP</div>
+      <div class="pedal-subtitle">RVox STYLE</div>
+
+      <div class="comp-vu"><div class="comp-vu-bar" id="compVU"></div></div>
+
+      <div class="pedal-controls">
+        <div class="knob-container">
+          <div class="knob" data-param="compGain"></div>
+          <div class="knob-label">GAIN</div>
+        </div>
+      </div>
+
+      <button class="footswitch" data-target="comp"></button>
+    </div>
+
+    <!-- 3. DELAY PEDAL -->
+    <div class="pedal pedal-delay" id="pedal-delay">
+      <div class="pedal-led"></div>
+      <div class="pedal-title">DELAY</div>
+      <div class="pedal-subtitle">STEREO</div>
+
+      <div class="pedal-switch-row">
+        <button class="pedal-toggle active" data-delaytype="tap">TAP</button>
+        <button class="pedal-toggle" data-delaytype="pingpong">PING-PONG</button>
+      </div>
+
+      <div class="pedal-controls">
+        <div class="knob-container">
+          <div class="knob" data-param="delayMix"></div>
+          <div class="knob-label">MIX</div>
+        </div>
+        <div class="knob-container">
+          <div class="knob" data-param="delayFb"></div>
+          <div class="knob-label">FEEDBACK</div>
+        </div>
+        <div class="knob-container">
+          <div class="knob" data-param="delayTime"></div>
+          <div class="knob-label">TIME</div>
+        </div>
+      </div>
+
+      <button class="tap-btn-pedal" id="tapBtn">TAP TEMPO</button>
+      <button class="footswitch" data-target="delay"></button>
+    </div>
+
+    <!-- 4. REVERB PEDAL -->
+    <div class="pedal pedal-reverb" id="pedal-reverb">
+      <div class="pedal-led"></div>
+      <div class="pedal-title">REVERB</div>
+      <div class="pedal-subtitle">STEREO</div>
+
+      <div class="rev-toggle-row">
+        <button class="active" data-revtype="hall">HALL</button>
+        <button data-revtype="plate">PLATE</button>
+        <button data-revtype="chamber">CHAMBER</button>
+      </div>
+
+      <div class="pedal-controls">
+        <div class="knob-container">
+          <div class="knob" data-param="revMix"></div>
+          <div class="knob-label">MIX</div>
+        </div>
+        <div class="knob-container">
+          <div class="knob" data-param="revDecay"></div>
+          <div class="knob-label">DECAY</div>
+        </div>
+      </div>
+
+      <button class="footswitch" data-target="reverb"></button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   СОСТОЯНИЕ И ПАРАМЕТРЫ
+   ===================================================== */
+const params = {
+  compGain: 0.5,
+  delayMix: 0.3, delayFb: 0.4, delayTime: 0.4,
+  revMix: 0.3, revDecay: 0.5
+};
+
+let fxStates = { eq: true, comp: true, delay: false, reverb: false };
+let delayType = 'tap';
+let reverbType = 'hall';
+
+let audioCtx = null;
+let stream = null;
+let srcNode = null;
+let chain = {};
+let isOn = false;
+
+const deviceSelect = document.getElementById('deviceSelect');
+const powerBtn     = document.getElementById('powerBtn');
+const refreshBtn   = document.getElementById('refreshBtn');
+const ledEl        = document.getElementById('led');
+const statusText   = document.getElementById('statusText');
+const ipTitle      = document.querySelector('.ip-title');
+
+/* =====================================================
+   ГЕНЕРАЦИЯ ИМПУЛЬСНЫХ ОТКЛИКОВ (IR)
+   ===================================================== */
+function makeIR(ctx, type, decayFactor) {
+  const rate = ctx.sampleRate;
+  let baseLen = type === 'hall' ? 3.0 : type === 'plate' ? 2.0 : 1.2;
+  const len = Math.floor(rate * baseLen * (0.2 + decayFactor * 1.5));
+  
+  const buf = ctx.createBuffer(2, len, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      const t = i / len;
+      let env = 0;
+      const n = Math.random() * 2 - 1;
+      
+      if (type === 'plate') {
+        env = Math.pow(1 - t, 2.5);
+        data[i] = n * env;
+      } else if (type === 'hall') {
+        env = Math.pow(1 - t, 1.8);
+        data[i] = n * env;
+      } else { // chamber
+        env = Math.pow(1 - t, 3.5);
+        data[i] = n * env;
+      }
+    }
+  }
+  return buf;
+}
+
+/* =====================================================
+   ПОСТРОЕНИЕ АУДИОЦЕПИ
+   ===================================================== */
+function buildChain() {
+  const ctx = audioCtx;
+  chain.input = ctx.createGain();
+  
+  // --- 1. EQ (10 BANDS) ---
+  chain.eqFilters = [];
+  const freqs = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+  freqs.forEach(f => {
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'peaking';
+    filter.frequency.value = f;
+    filter.Q.value = 1.0;
+    filter.gain.value = 0;
+    chain.eqFilters.push(filter);
+  });
+  
+  chain.eqIn = ctx.createGain();
+  chain.eqOut = ctx.createGain();
+  
+  let prev = chain.eqIn;
+  chain.eqFilters.forEach(f => { prev.connect(f); prev = f; });
+  prev.connect(chain.eqOut);
+
+  // --- 2. COMPRESSOR (RVox Style) ---
+  chain.compIn = ctx.createGain();
+  chain.compNode = ctx.createDynamicsCompressor();
+  chain.compNode.threshold.value = -24;
+  chain.compNode.knee.value = 5;
+  chain.compNode.ratio.value = 12;
+  chain.compNode.attack.value = 0.005;
+  chain.compNode.release.value = 0.1;
+  chain.compOut = ctx.createGain();
+  
+  chain.compIn.connect(chain.compNode);
+  chain.compNode.connect(chain.compOut);
+
+  // --- 3. DELAY ---
+  chain.delayIn = ctx.createGain();
+  chain.delayOut = ctx.createGain();
+  
+  chain.delayDry = ctx.createGain();
+  chain.delayWet = ctx.createGain();
+  
+  chain.delayL = ctx.createDelay(2.0);
+  chain.delayR = ctx.createDelay(2.0);
+  chain.delayFbL = ctx.createGain();
+  chain.delayFbR = ctx.createGain();
+  
+  chain.delayIn.connect(chain.delayDry);
+  chain.delayDry.connect(chain.delayOut);
+  
+  chain.delayIn.connect(chain.delayWet);
+  
+  chain.delayL.connect(chain.delayFbL);
+  chain.delayR.connect(chain.delayFbR);
+  
+  chain.delaySplit = ctx.createChannelSplitter(2);
+  chain.delayMerge = ctx.createChannelMerger(2);
+  
+  chain.delayIn.connect(chain.delaySplit);
+  
+  chain.tapSendL = ctx.createGain();
+  chain.tapSendR = ctx.createGain();
+  chain.delaySplit.connect(chain.tapSendL, 0);
+  chain.delaySplit.connect(chain.tapSendR, 1);
+  
+  chain.tapSendL.connect(chain.delayL);
+  chain.tapSendR.connect(chain.delayR);
+  
+  chain.delayL.connect(chain.delayMerge, 0, 0);
+  chain.delayR.connect(chain.delayMerge, 0, 1);
+
+  chain.ppSendL = ctx.createGain();
+  chain.ppSendR = ctx.createGain();
+  chain.delaySplit.connect(chain.ppSendL, 0);
+  chain.delaySplit.connect(chain.ppSendR, 1);
+  
+  chain.ppSendL.connect(chain.delayL);
+  chain.ppSendR.connect(chain.delayR);
+  
+  chain.delayL.connect(chain.delayFbR);
+  chain.delayR.connect(chain.delayFbL);
+  
+  chain.delayFbL.connect(chain.delayL);
+  chain.delayFbR.connect(chain.delayR);
+
+  chain.delayMerge.connect(chain.delayWet);
+  chain.delayWet.connect(chain.delayOut);
+  
+  chain.tapSendL.gain.value = 1;
+  chain.tapSendR.gain.value = 1;
+  chain.ppSendL.gain.value = 0;
+  chain.ppSendR.gain.value = 0;
+
+  // --- 4. REVERB ---
+  chain.revIn = ctx.createGain();
+  chain.revOut = ctx.createGain();
+  chain.revDry = ctx.createGain();
+  chain.revWet = ctx.createGain();
+  chain.conv = ctx.createConvolver();
+  
+  chain.revIn.connect(chain.revDry);
+  chain.revDry.connect(chain.revOut);
+  
+  chain.revIn.connect(chain.conv);
+  chain.conv.connect(chain.revWet);
+  chain.revWet.connect(chain.revOut);
+
+  // --- СОЕДИНЕНИЕ ЦЕПИ ---
+  chain.input.connect(chain.eqIn);
+  chain.eqOut.connect(chain.compIn);
+  chain.compOut.connect(chain.delayIn);
+  chain.delayOut.connect(chain.revIn);
+  chain.revOut.connect(ctx.destination);
+
+  applyAll();
+}
+
+/* =====================================================
+   ПРИМЕНЕНИЕ ПАРАМЕТРОВ
+   ===================================================== */
+function applyAll() {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const S = 0.05;
+
+  // EQ
+  const eqS = fxStates.eq ? 1 : 0;
+  chain.eqIn.gain.setTargetAtTime(eqS, t, S);
+
+  // Compressor
+  const compS = fxStates.comp ? 1 : 0;
+  chain.compIn.gain.setTargetAtTime(compS, t, S);
+  
+  const cGain = Math.pow(params.compGain, 2) * 15;
+  chain.compIn.gain.setTargetAtTime(compS * cGain, t, S);
+  chain.compOut.gain.setTargetAtTime(compS * (1 / Math.sqrt(cGain)), t, S);
+  
+  // Delay
+  const delayS = fxStates.delay ? 1 : 0;
+  chain.delayDry.gain.setTargetAtTime(delayS ? 1 - params.delayMix : 1, t, S);
+  chain.delayWet.gain.setTargetAtTime(delayS ? params.delayMix : 0, t, S);
+  
+  const fb = params.delayFb * 0.8;
+  const time = 0.05 + params.delayTime * 0.95;
+  
+  chain.delayFbL.gain.setTargetAtTime(fb, t, S);
+  chain.delayFbR.gain.setTargetAtTime(fb, t, S);
+  chain.delayL.delayTime.setTargetAtTime(time, t, S);
+  chain.delayR.delayTime.setTargetAtTime(time * (delayType === 'pingpong' ? 2 : 1), t, S);
+
+  // Reverb
+  const revS = fxStates.reverb ? 1 : 0;
+  chain.revDry.gain.setTargetAtTime(revS ? 1 - params.revMix : 1, t, S);
+  chain.revWet.gain.setTargetAtTime(revS ? params.revMix : 0, t, S);
+}
+
+function updateReverbIR() {
+  if (!audioCtx) return;
+  chain.conv.buffer = makeIR(audioCtx, reverbType, params.revDecay);
+}
+
+/* =====================================================
+   УПРАВЛЕНИЕ (ИНТЕРФЕЙС)
+   ===================================================== */
+// Футсвитчи
+document.querySelectorAll('.footswitch').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.target;
+    fxStates[target] = !fxStates[target];
+    btn.closest('.pedal').classList.toggle('off', !fxStates[target]);
+    applyAll();
+  });
+});
+
+// Ручки (Knobs)
+document.querySelectorAll('.knob').forEach(el => {
+  const param = el.dataset.param;
+  let value = params[param];
+  let dragging = false, startY = 0, startVal = 0;
+  
+  function render() {
+    el.style.transform = `rotate(${-135 + value * 270}deg)`;
+    params[param] = value;
+    applyAll();
+    if (param === 'revDecay') {
+      clearTimeout(window.revDebounce);
+      window.revDebounce = setTimeout(updateReverbIR, 100);
+    }
+  }
+
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault(); dragging = true;
+    startY = e.clientY; startVal = value;
+    el.setPointerCapture(e.pointerId);
+  });
+
+  el.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    value = Math.min(1, Math.max(0, startVal + (startY - e.clientY) / 150));
+    render();
+  });
+
+  const end = () => { dragging = false; };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  
+  render();
+});
+
+// EQ Слайдеры
+document.querySelectorAll('input[data-eq]').forEach((el, idx) => {
+  el.addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    if (chain.eqFilters && chain.eqFilters[idx]) {
+      chain.eqFilters[idx].gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
+    }
+  });
+});
+
+// Переключатели типа задержки
+document.querySelectorAll('[data-delaytype]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-delaytype]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    delayType = btn.dataset.delaytype;
+    
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    
+    if (delayType === 'tap') {
+      chain.tapSendL.gain.setTargetAtTime(1, t, 0.05);
+      chain.tapSendR.gain.setTargetAtTime(1, t, 0.05);
+      chain.ppSendL.gain.setTargetAtTime(0, t, 0.05);
+      chain.ppSendR.gain.setTargetAtTime(0, t, 0.05);
+    } else {
+      chain.tapSendL.gain.setTargetAtTime(0, t, 0.05);
+      chain.tapSendR.gain.setTargetAtTime(0, t, 0.05);
+      chain.ppSendL.gain.setTargetAtTime(1, t, 0.05);
+      chain.ppSendR.gain.setTargetAtTime(0, t, 0.05);
+    }
+    applyAll();
+  });
+});
+
+// Переключатели типа реверба
+document.querySelectorAll('[data-revtype]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-revtype]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    reverbType = btn.dataset.revtype;
+    updateReverbIR();
+  });
+});
+
+// TAP TEMPO
+let tapTimes = [];
+const tapBtn = document.getElementById('tapBtn');
+
+tapBtn.addEventListener('click', () => {
+  const now = performance.now();
+  tapBtn.style.boxShadow = '0 0 15px #fff';
+  setTimeout(() => tapBtn.style.boxShadow = '', 100);
+
+  if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2000) {
+    tapTimes = [];
+  }
+  tapTimes.push(now);
+  if (tapTimes.length > 4) tapTimes.shift();
+
+  if (tapTimes.length >= 2) {
+    let intervals = [];
+    for (let i = 1; i < tapTimes.length; i++) {
+      intervals.push(tapTimes[i] - tapTimes[i - 1]);
+    }
+    const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    const delayTime = Math.min(avgInterval / 1000, 1.9);
+    
+    params.delayTime = Math.max(0, Math.min(1, (delayTime - 0.05) / 0.95));
+    
+    const timeKnob = document.querySelector('[data-param="delayTime"]');
+    if (timeKnob) timeKnob.style.transform = `rotate(${-135 + params.delayTime * 270}deg)`;
+    
+    applyAll();
+    
+    const bpm = Math.round(60000 / avgInterval);
+    statusText.textContent = `TAP: ${bpm} BPM`;
+    statusText.style.color = '#fb8c00';
+    clearTimeout(window.tapStatus);
+    window.tapStatus = setTimeout(() => {
+      if (isOn) statusText.textContent = 'ВКЛЮЧЁН · ИДЁТ СИГНАЛ', statusText.style.color = '#7dff9a';
+    }, 2000);
+  }
+});
+
+/* =====================================================
+   СИСТЕМНЫЕ ФУНКЦИИ
+   ===================================================== */
+async function startAudio() {
+  const deviceId = deviceSelect.value;
+  const audioConstraints = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+  if (deviceId) audioConstraints.deviceId = { exact: deviceId };
+
+  stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
+
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    buildChain();
+    updateReverbIR();
+  }
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  srcNode = audioCtx.createMediaStreamSource(stream);
+  srcNode.connect(chain.input);
+
+  isOn = true;
+  powerBtn.textContent = 'POWER OFF'; powerBtn.classList.add('on');
+  ledEl.classList.add('on');
+  statusText.textContent = 'ВКЛЮЧЁН · ИДЁТ СИГНАЛ'; statusText.style.color = '#7dff9a';
+  
+  await refreshDevices();
+}
+
+async function stopAudio() {
+  if (isRecording) await stopRecording();
+  if (srcNode) { try { srcNode.disconnect(); } catch (e) {} srcNode = null; }
+  if (stream)  { stream.getTracks().forEach(tr => tr.stop()); stream = null; }
+  if (audioCtx && audioCtx.state === 'running') { try { await audioCtx.suspend(); } catch (e) {} }
+
+  isOn = false;
+  powerBtn.textContent = 'POWER ON'; powerBtn.classList.remove('on');
+  ledEl.classList.remove('on');
+  statusText.textContent = 'ВЫКЛЮЧЕН'; statusText.style.color = '#888';
+}
+
+async function swapDevice() {
+  if (!isOn) return;
+  if (stream) { stream.getTracks().forEach(tr => tr.stop()); stream = null; }
+  if (srcNode) { try { srcNode.disconnect(); } catch (e) {} srcNode = null; }
+  try {
+    const deviceId = deviceSelect.value;
+    const audioConstraints = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+    if (deviceId) audioConstraints.deviceId = { exact: deviceId };
+    stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
+    srcNode = audioCtx.createMediaStreamSource(stream);
+    srcNode.connect(chain.input);
+    statusText.textContent = 'ВКЛЮЧЁН · ИДЁТ СИГНАЛ'; statusText.style.color = '#7dff9a';
+  } catch (err) {
+    statusText.textContent = 'ОШИБКА УСТРОЙСТВА'; statusText.style.color = '#ff7b7b';
+  }
+}
+
+function updateDeviceUI(count) {
+  const show = count >= 1;
+  ipTitle.style.display = show ? '' : 'none';
+  deviceSelect.style.display = show ? '' : 'none';
+  refreshBtn.style.display = show ? '' : 'none';
+  powerBtn.style.flex = show ? '' : '1';
+}
+
+async function refreshDevices() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const inputs  = devices.filter(d => d.kind === 'audioinput');
+    const prev    = deviceSelect.value;
+    deviceSelect.innerHTML = '';
+    if (inputs.length === 0) {
+      const o = document.createElement('option'); o.value = ''; o.textContent = 'Нет аудиовходов'; deviceSelect.appendChild(o);
+      updateDeviceUI(0); return;
+    }
+    inputs.forEach((d, i) => {
+      const o = document.createElement('option'); o.value = d.deviceId; o.textContent = d.label || `Аудиовход ${i + 1}`; deviceSelect.appendChild(o);
+    });
+    if (prev && [...deviceSelect.options].some(o => o.value === prev)) deviceSelect.value = prev;
+    updateDeviceUI(inputs.length);
+  } catch (e) {}
+}
+
+powerBtn.addEventListener('click', async () => {
+  try { isOn ? await stopAudio() : await startAudio(); }
+  catch (err) { statusText.textContent = 'НЕТ ДОСТУПА К МИКРОФОНУ'; statusText.style.color = '#ff7b7b'; }
+});
+refreshBtn.addEventListener('click', refreshDevices);
+deviceSelect.addEventListener('change', swapDevice);
+if (navigator.mediaDevices?.addEventListener) navigator.mediaDevices.addEventListener('devicechange', refreshDevices);
+
+/* =====================================================
+   ЗАПИСЬ (WAV)
+   ===================================================== */
+const recBtn     = document.getElementById('recBtn');
+const folderBtn  = document.getElementById('folderBtn');
+const recFolder  = document.getElementById('recFolder');
+const recStatus  = document.getElementById('recStatus');
+const recBody    = document.getElementById('recBody');
+const recTimer   = document.getElementById('recTimer');
+const waveCanvas = document.getElementById('recWave');
+const waveCtx    = waveCanvas.getContext('2d');
+
+let isRecording = false;
+let dirHandle = null;
+let mediaRecorder = null;
+let mediaDest = null;
+let recordedBlobs = [];
+let recStartTime = 0;
+let recTimerId = null;
+let waveRafId = null;
+let waveData = null;
+let analyserNode = null;
+
+const IDB_NAME = 'vocal-rec'; const IDB_STORE = 'handles'; const IDB_KEY = 'saveDir';
+
+function idbOpen() { return new Promise((res, rej) => { const req = indexedDB.open(IDB_NAME, 1); req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE); req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); }); }
+async function idbGet(key) { const db = await idbOpen(); return new Promise((res, rej) => { const r = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(key); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function idbSet(key, val) { const db = await idbOpen(); return new Promise((res, rej) => { const tx = db.transaction(IDB_STORE, 'readwrite'); tx.objectStore(IDB_STORE).put(val, key); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); }
+
+const FS_SUPPORTED = 'showDirectoryPicker' in window && 'FileSystemDirectoryHandle' in window;
+function pad3(n) { return String(n).padStart(3, '0'); }
+
+function audioBufferToWav(buffer) {
+  let numOfChan = buffer.numberOfChannels,
+      length = buffer.length * numOfChan * 2 + 44,
+      bufferArr = new ArrayBuffer(length),
+      view = new DataView(bufferArr),
+      channels = [], i, sample,
+      offset = 0, pos = 0;
+
+  const writeStr = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+  writeStr(0, 'RIFF'); view.setUint32(4, length - 8, true); writeStr(8, 'WAVE'); writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numOfChan, true);
+  view.setUint32(24, buffer.sampleRate, true); view.setUint32(28, buffer.sampleRate * 2 * numOfChan, true);
+  view.setUint16(32, numOfChan * 2, true); view.setUint16(34, 16, true); writeStr(36, 'data'); view.setUint32(40, length - 44, true);
+
+  for (i = 0; i < buffer.numberOfChannels; i++) channels.push(buffer.getChannelData(i));
+
+  while (pos < buffer.length) {
+    for (i = 0; i < numOfChan; i++) {
+      sample = Math.max(-1, Math.min(1, channels[i][pos]));
+      sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+      view.setInt16(44 + offset, sample, true);
+      offset += 2;
+    }
+    pos++;
+  }
+  return new Blob([bufferArr], { type: 'audio/wav' });
+}
+
+function updateFolderLabel() {
+  if (dirHandle) {
+    recFolder.textContent = dirHandle.name || 'папка выбрана';
+    recFolder.style.color = '#7dff9a'; recFolder.title = dirHandle.name || '';
+  } else {
+    recFolder.textContent = 'папка не выбрана'; recFolder.style.color = '#888'; recFolder.title = '';
+  }
+}
+
+async function ensurePermission(handle) {
+  const opts = { mode: 'readwrite' };
+  if ((await handle.queryPermission(opts)) === 'granted') return true;
+  if ((await handle.requestPermission(opts)) === 'granted') return true;
+  return false;
+}
+
+async function pickFolder(force = false) {
+  if (!FS_SUPPORTED) throw new Error('Браузер не поддерживает File System Access API');
+  if (dirHandle && !force) return dirHandle;
+  const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+  dirHandle = handle;
+  try { await idbSet(IDB_KEY, handle); } catch (e) {}
+  updateFolderLabel();
+  return handle;
+}
+
+async function ensureDir() {
+  if (!dirHandle) {
+    try { const saved = await idbGet(IDB_KEY); if (saved) { dirHandle = saved; updateFolderLabel(); } } catch (e) {}
+  }
+  if (!dirHandle) await pickFolder(true);
+  if (!(await ensurePermission(dirHandle))) throw new Error('Нет прав на запись в папку');
+  return dirHandle;
+}
+
+async function nextSequenceNumber(handle) {
+  const prefix = `VocalFX_`;
+  let max = 0;
+  try {
+    for await (const entry of handle.values()) {
+      if (entry.kind !== 'file') continue;
+      const n = entry.name;
+      if (!n.startsWith(prefix) || !n.toLowerCase().endsWith('.wav')) continue;
+      const mid = n.slice(prefix.length, -4);
+      const num = parseInt(mid, 10);
+      if (!isNaN(num) && num > max) max = num;
+    }
+  } catch (e) {}
+  return max + 1;
+}
+
+function startWave() {
+  if (!analyserNode) return;
+  waveData = new Uint8Array(analyserNode.fftSize);
+  const loop = () => {
+    if (!isRecording) return;
+    const w = waveCanvas.width, h = waveCanvas.height;
+    analyserNode.getByteTimeDomainData(waveData);
+    waveCtx.fillStyle = '#050505'; waveCtx.fillRect(0, 0, w, h);
+    waveCtx.strokeStyle = 'rgba(255,60,60,.25)'; waveCtx.lineWidth = 1;
+    waveCtx.beginPath(); waveCtx.moveTo(0, h / 2); waveCtx.lineTo(w, h / 2); waveCtx.stroke();
+    waveCtx.strokeStyle = '#ff5a5a'; waveCtx.lineWidth = 2; waveCtx.beginPath();
+    const step = w / waveData.length;
+    for (let i = 0; i < waveData.length; i++) {
+      const v = (waveData[i] - 128) / 128;
+      const y = h / 2 + v * (h / 2 - 4);
+      if (i === 0) waveCtx.moveTo(i * step, y); else waveCtx.lineTo(i * step, y);
+    }
+    waveCtx.stroke();
+    waveRafId = requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+function stopWave() {
+  if (waveRafId) { cancelAnimationFrame(waveRafId); waveRafId = null; }
+  waveCtx.fillStyle = '#050505'; waveCtx.fillRect(0, 0, waveCanvas.width, waveCanvas.height);
+}
+
+function startTimer() {
+  recStartTime = performance.now(); recTimer.textContent = '00:00';
+  recTimerId = setInterval(() => {
+    const s = Math.floor((performance.now() - recStartTime) / 1000);
+    recTimer.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  }, 200);
+}
+function stopTimer() { if (recTimerId) { clearInterval(recTimerId); recTimerId = null; } }
+
+async function startRecording() {
+  if (!FS_SUPPORTED) { recStatus.textContent = 'Нужен Chrome или Edge'; recStatus.style.color = '#ff7b7b'; return; }
+  if (!isOn || !audioCtx) { recStatus.textContent = 'Включите POWER'; recStatus.style.color = '#ff7b7b'; return; }
+  try { await ensureDir(); }
+  catch (e) { recStatus.textContent = 'Папка не выбрана'; recStatus.style.color = '#ff7b7b'; return; }
+
+  recordedBlobs = [];
+  mediaDest = audioCtx.createMediaStreamDestination();
+  analyserNode = audioCtx.createAnalyser(); analyserNode.fftSize = 1024;
+
+  chain.revOut.connect(mediaDest);
+  chain.revOut.connect(analyserNode);
+
+  let options = { mimeType: 'audio/webm' };
+  if (!MediaRecorder.isTypeSupported('audio/webm')) options = { mimeType: 'audio/ogg' };
+
+  mediaRecorder = new MediaRecorder(mediaDest.stream, options);
+  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedBlobs.push(e.data); };
+
+  mediaRecorder.onstop = async () => {
+    const webmBlob = new Blob(recordedBlobs, { type: options.mimeType });
+    const arrayBuffer = await webmBlob.arrayBuffer();
+
+    audioCtx.decodeAudioData(arrayBuffer).then(async (audioBuffer) => {
+      const wavBlob = audioBufferToWav(audioBuffer);
+      try {
+        const handle = await ensureDir();
+        const num = await nextSequenceNumber(handle);
+        const fname = `VocalFX_${pad3(num)}.wav`;
+        const fileHandle = await handle.getFileHandle(fname, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(wavBlob);
+        await writable.close();
+        recStatus.textContent = `СОХРАНЕНО: ${fname}`; recStatus.style.color = '#7dff9a';
+      } catch (err) {
+        recStatus.textContent = 'Ошибка сохранения: ' + err.message; recStatus.style.color = '#ff7b7b';
+      }
+    }).catch(err => {
+      recStatus.textContent = 'Ошибка конвертации аудио'; recStatus.style.color = '#ff7b7b';
+    });
+  };
+
+  mediaRecorder.start();
+  isRecording = true;
+  recBtn.classList.add('recording'); recBody.classList.add('active'); folderBtn.disabled = true;
+  recStatus.textContent = 'ИДЁТ ЗАПИСЬ…'; recStatus.style.color = '#ff5a5a';
+  startTimer(); startWave();
+}
+
+async function stopRecording() {
+  if (!isRecording) return;
+  isRecording = false;
+  recBtn.classList.remove('recording'); folderBtn.disabled = false;
+  stopTimer(); stopWave();
+
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+
+  if (chain.revOut) {
+    try { chain.revOut.disconnect(mediaDest); } catch(e){}
+    try { chain.revOut.disconnect(analyserNode); } catch(e){}
+  }
+  recStatus.textContent = 'Обработка...'; recStatus.style.color = '#ccc';
+}
+
+recBtn.addEventListener('click', async () => { isRecording ? await stopRecording() : await startRecording(); });
+folderBtn.addEventListener('click', async () => {
+  if (isRecording) return;
+  try { await pickFolder(true); recStatus.textContent = `Папка: ${dirHandle.name}`; recStatus.style.color = '#7dff9a'; }
+  catch (e) { if (e.name !== 'AbortError') { recStatus.textContent = 'Ошибка выбора папки'; recStatus.style.color = '#ff7b7b'; } }
+});
+
+// Инициализация
+refreshDevices();
+(function initRec() {
+  stopWave();
+  if (!FS_SUPPORTED) {
+    recBtn.disabled = true; folderBtn.disabled = true;
+    recStatus.textContent = 'Запись недоступна (нужен Chrome/Edge)'; recStatus.style.color = '#ff7b7b'; return;
+  }
+  idbGet(IDB_KEY).then(h => { if (h) { dirHandle = h; updateFolderLabel(); } }).catch(() => {});
+  updateFolderLabel();
+})();
+
+// Индикатор компрессора
+setInterval(() => {
+  if (!isOn || !chain.compNode || !fxStates.comp) {
+    document.getElementById('compVU').style.width = '0%';
+    return;
+  }
+  if(analyserNode) {
+    let data = new Uint8Array(analyserNode.frequencyBinCount);
+    analyserNode.getByteFrequencyData(data);
+    let sum = data.reduce((a,b) => a+b, 0);
+    let avg = sum / data.length;
+    let percent = Math.min(100, (avg / 255) * 150); 
+    document.getElementById('compVU').style.width = percent + '%';
+  }
+}, 50);
+
+</script>
+</body>
+</html>
