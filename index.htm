@@ -78,7 +78,7 @@
      ФЛАЙТ-КЕЙС (PEDALBOARD)
      ===================================================== */
   .pedalboard-case {
-    width: 1040px; max-width: 100%;
+    width: 1150px; max-width: 100%;
     background: #111;
     border: 12px solid #b0b0b0;
     border-radius: 12px;
@@ -104,36 +104,47 @@
     border-radius: 6px;
     padding: 20px;
     display: flex;
-    flex-direction: row; /* Горизонтальное расположение по умолчанию */
+    flex-direction: row;
     gap: 16px;
     justify-content: center;
     align-items: flex-end;
-    flex-wrap: wrap; /* Позволяет переноситься, если не влезает */
+    flex-wrap: wrap;
     border: 1px solid #333;
     box-shadow: inset 0 5px 15px rgba(0,0,0,0.9);
+    min-height: 420px;
   }
 
   /* =====================================================
-     ОБЩИЙ СТИЛЬ ПЕДАЛИ (МЕТАЛЛИЧЕСКИЙ БЛЕСК)
+     ПЕДАЛИ (МЕТАЛЛИЧЕСКИЙ БЛЕСК + DRAG)
      ===================================================== */
   .pedal {
-    width: 230px;
+    width: 220px;
     border-radius: 8px;
-    padding: 12px 12px 20px;
+    padding: 12px 12px 25px;
     display: flex;
     flex-direction: column;
     align-items: center;
     position: relative;
-    overflow: hidden; /* Для блика */
+    overflow: hidden;
     box-shadow: 
       0 10px 20px rgba(0,0,0,0.6),
-      inset 0 2px 2px rgba(255,255,255,0.4), /* Верхний блик */
-      inset 0 -4px 8px rgba(0,0,0,0.6);      /* Тень снизу */
+      inset 0 2px 2px rgba(255,255,255,0.4),
+      inset 0 -4px 8px rgba(0,0,0,0.6);
     border: 2px solid #111;
-    transition: filter 0.2s;
+    transition: filter 0.2s, transform 0.1s, box-shadow 0.2s;
   }
   
-  /* Глянцевый отблеск */
+  /* Стили для перетаскивания */
+  .pedal.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+  }
+  .pedal.drag-over {
+    border-color: #fff;
+    box-shadow: 0 0 20px rgba(255,255,255,0.5), inset 0 2px 2px rgba(255,255,255,0.4);
+  }
+
   .pedal::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 45%;
     background: linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
@@ -142,19 +153,25 @@
 
   .pedal.off { filter: grayscale(0.9) brightness(0.6); }
 
-  /* Цвета педалей (с градиентом для металла) */
+  /* Цвета педалей */
+  .pedal-gate { background: linear-gradient(to bottom, #90a4ae 0%, #607d8b 20%, #37474f 100%); }
   .pedal-eq { background: linear-gradient(to bottom, #66bb6a 0%, #388e3c 20%, #1b5e20 100%); }
   .pedal-comp { background: linear-gradient(to bottom, #ef5350 0%, #d32f2f 20%, #b71c1c 100%); }
   .pedal-delay { background: linear-gradient(to bottom, #ffa726 0%, #f57c00 20%, #e65100 100%); }
   .pedal-reverb { background: linear-gradient(to bottom, #ab47bc 0%, #8e24aa 20%, #4a148c 100%); }
 
+  .pedal-header {
+    width: 100%; text-align: center; margin-bottom: 10px; z-index: 2;
+    cursor: grab; padding: 5px 0; border-radius: 4px;
+  }
+  .pedal-header:active { cursor: grabbing; }
+  .pedal-header:hover { background: rgba(255,255,255,0.1); }
+
   .pedal-title {
-    font-size: 14px; font-weight: 900; letter-spacing: 2px; color: #fff;
-    margin-bottom: 12px; text-transform: uppercase; z-index: 2;
+    font-size: 14px; font-weight: 900; letter-spacing: 2px; color: #fff; text-transform: uppercase;
   }
   .pedal-subtitle {
-    font-size: 8px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,0.8);
-    margin-top: -10px; margin-bottom: 10px; z-index: 2;
+    font-size: 8px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,0.8); margin-top: 2px;
   }
 
   .pedal-controls {
@@ -173,14 +190,14 @@
   }
 
   /* =====================================================
-     НАЖИМНАЯ ПЛАСТИНА (BOSS-STYLE)
+     БОЛЬШАЯ НАЖИМНАЯ ПЛАСТИНА
      ===================================================== */
   .footswitch {
-    width: 80px; 
-    height: 50px;
+    width: 100px; 
+    height: 65px;
     background: linear-gradient(to bottom, #f0f0f0 0%, #999 100%);
     border: 2px solid #111;
-    border-radius: 6px;
+    border-radius: 8px;
     position: relative;
     cursor: pointer;
     margin-top: auto;
@@ -189,31 +206,28 @@
     z-index: 2;
   }
   
-  /* Черная резиновая накладка */
   .footswitch::after {
     content: ''; position: absolute;
-    top: 6px; left: 8px; right: 8px; bottom: 10px;
+    top: 8px; left: 10px; right: 10px; bottom: 12px;
     background: #151515;
-    border-radius: 3px;
-    box-shadow: inset 0 3px 6px rgba(0,0,0,0.9);
+    border-radius: 4px;
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.9);
   }
 
-  /* Петля снизу */
   .footswitch::before {
     content: ''; position: absolute;
-    bottom: -2px; left: 10%; right: 10%; height: 6px;
+    bottom: -3px; left: 10%; right: 10%; height: 8px;
     background: linear-gradient(to right, #666, #ddd, #666);
-    border-radius: 2px;
+    border-radius: 3px;
     border: 1px solid #000;
     z-index: 3;
   }
 
   .footswitch:active {
-    transform: translateY(2px); /* Эффект нажатия */
+    transform: translateY(3px);
     box-shadow: 0 2px 3px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.4);
   }
 
-  /* Индикатор педали */
   .pedal-led {
     position: absolute; top: 12px; right: 12px;
     width: 10px; height: 10px; border-radius: 50%;
@@ -241,9 +255,22 @@
   /* =====================================================
      СПЕЦИФИКАЦИЯ ПЕДАЛЕЙ
      ===================================================== */
-  /* 1. EQ */
+  /* 1. GATE */
+  .gate-vu {
+    width: 90%; height: 16px; background: #111; border-radius: 3px; border: 1px solid #000;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8); margin-bottom: 15px; position: relative; overflow: hidden; z-index: 2;
+  }
+  .gate-vu-bar {
+    position: absolute; top: 0; left: 0; height: 100%; width: 0%;
+    background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336); transition: width 0.05s;
+  }
+  .gate-threshold-line {
+    position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; box-shadow: 0 0 5px #fff; z-index: 3;
+  }
+
+  /* 2. EQ */
   .eq-sliders {
-    display: flex; justify-content: space-between; width: 100%; height: 100px; padding: 0 4px; z-index: 2;
+    display: flex; justify-content: space-between; width: 100%; height: 90px; padding: 0 4px; z-index: 2;
   }
   .eq-sliders input[type="range"] {
     -webkit-appearance: slider-vertical;
@@ -260,7 +287,7 @@
   .eq-labels { display: flex; justify-content: space-between; width: 100%; padding: 0 2px; margin-top: 4px; z-index: 2; }
   .eq-labels span { font-size: 7px; color: rgba(255,255,255,0.7); font-weight: 700; }
 
-  /* 2. Compressor */
+  /* 3. Compressor */
   .comp-vu {
     width: 80%; height: 20px; background: #111; border-radius: 3px; border: 1px solid #000;
     box-shadow: inset 0 2px 5px rgba(0,0,0,0.8); margin-bottom: 15px; position: relative; overflow: hidden; z-index: 2;
@@ -270,7 +297,7 @@
     background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336); transition: width 0.05s;
   }
 
-  /* 3. Delay */
+  /* 4. Delay */
   .tap-btn-pedal {
     background: #222; border: 2px solid #111; color: #fff; font-size: 10px; font-weight: 700;
     padding: 6px 12px; border-radius: 4px; cursor: pointer; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
@@ -278,7 +305,7 @@
   }
   .tap-btn-pedal:active { transform: scale(0.95); box-shadow: 0 0 10px rgba(255,255,255,0.2); }
 
-  /* 4. Reverb */
+  /* 5. Reverb */
   .rev-toggle-row { display: flex; gap: 4px; justify-content: center; margin-bottom: 10px; z-index: 2; }
   .rev-toggle-row button {
     font-size: 8px; padding: 4px 6px; background: #222; border: 1px solid #111; color: #888;
@@ -287,20 +314,12 @@
   .rev-toggle-row button.active { background: #eee; color: #111; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
 
   /* =====================================================
-     МОБИЛЬНАЯ АДАПТАЦИЯ (ВЕРТИКАЛЬНЫЙ РЯД)
+     МОБИЛЬНАЯ АДАПТАЦИЯ
      ===================================================== */
-  @media (max-width: 1050px) {
+  @media (max-width: 1150px) {
     .pedalboard-case { padding: 10px; border-width: 8px; }
-    .pedalboard-inner { 
-      flex-direction: column; 
-      align-items: center; 
-      padding: 10px; 
-    }
-    .pedal { 
-      width: 100%; 
-      max-width: 320px; 
-      margin-bottom: 10px;
-    }
+    .pedalboard-inner { flex-direction: column; align-items: center; padding: 10px; }
+    .pedal { width: 100%; max-width: 320px; margin-bottom: 10px; }
   }
 </style>
 </head>
@@ -336,13 +355,38 @@
 
 <!-- ПЕДАЛБОРД -->
 <div class="pedalboard-case">
-  <div class="pedalboard-inner">
+  <div class="pedalboard-inner" id="pedalboardInner">
     
-    <!-- 1. EQ PEDAL -->
-    <div class="pedal pedal-eq" id="pedal-eq">
+    <!-- 1. GATE PEDAL -->
+    <div class="pedal pedal-gate off" id="pedal-gate" data-pedal-id="gate" draggable="true">
       <div class="pedal-led"></div>
-      <div class="pedal-title">EQ</div>
-      <div class="pedal-subtitle">10-BAND PARAMETRIC</div>
+      <div class="pedal-header">
+        <div class="pedal-title">GATE</div>
+        <div class="pedal-subtitle">NOISE GATE</div>
+      </div>
+      
+      <div class="gate-vu">
+        <div class="gate-vu-bar" id="gateVU"></div>
+        <div class="gate-threshold-line" id="gateThresholdLine" style="left: 20%;"></div>
+      </div>
+
+      <div class="pedal-controls">
+        <div class="knob-container">
+          <div class="knob" data-param="gateThreshold"></div>
+          <div class="knob-label">THRESH</div>
+        </div>
+      </div>
+
+      <button class="footswitch" data-target="gate"></button>
+    </div>
+
+    <!-- 2. EQ PEDAL -->
+    <div class="pedal pedal-eq off" id="pedal-eq" data-pedal-id="eq" draggable="true">
+      <div class="pedal-led"></div>
+      <div class="pedal-header">
+        <div class="pedal-title">EQ</div>
+        <div class="pedal-subtitle">10-BAND PARAMETRIC</div>
+      </div>
       
       <div class="eq-sliders">
         <input type="range" min="-12" max="12" value="0" step="1" data-freq="31" data-eq>
@@ -364,11 +408,13 @@
       <button class="footswitch" data-target="eq"></button>
     </div>
 
-    <!-- 2. COMPRESSOR PEDAL -->
-    <div class="pedal pedal-comp" id="pedal-comp">
+    <!-- 3. COMPRESSOR PEDAL -->
+    <div class="pedal pedal-comp off" id="pedal-comp" data-pedal-id="comp" draggable="true">
       <div class="pedal-led"></div>
-      <div class="pedal-title">COMP</div>
-      <div class="pedal-subtitle">RVox STYLE</div>
+      <div class="pedal-header">
+        <div class="pedal-title">COMP</div>
+        <div class="pedal-subtitle">RVox STYLE</div>
+      </div>
 
       <div class="comp-vu"><div class="comp-vu-bar" id="compVU"></div></div>
 
@@ -382,11 +428,13 @@
       <button class="footswitch" data-target="comp"></button>
     </div>
 
-    <!-- 3. DELAY PEDAL -->
-    <div class="pedal pedal-delay" id="pedal-delay">
+    <!-- 4. DELAY PEDAL -->
+    <div class="pedal pedal-delay off" id="pedal-delay" data-pedal-id="delay" draggable="true">
       <div class="pedal-led"></div>
-      <div class="pedal-title">DELAY</div>
-      <div class="pedal-subtitle">STEREO</div>
+      <div class="pedal-header">
+        <div class="pedal-title">DELAY</div>
+        <div class="pedal-subtitle">STEREO</div>
+      </div>
 
       <div class="pedal-switch-row">
         <button class="pedal-toggle active" data-delaytype="tap">TAP</button>
@@ -412,11 +460,13 @@
       <button class="footswitch" data-target="delay"></button>
     </div>
 
-    <!-- 4. REVERB PEDAL -->
-    <div class="pedal pedal-reverb" id="pedal-reverb">
+    <!-- 5. REVERB PEDAL -->
+    <div class="pedal pedal-reverb off" id="pedal-reverb" data-pedal-id="reverb" draggable="true">
       <div class="pedal-led"></div>
-      <div class="pedal-title">REVERB</div>
-      <div class="pedal-subtitle">STEREO</div>
+      <div class="pedal-header">
+        <div class="pedal-title">REVERB</div>
+        <div class="pedal-subtitle">STEREO</div>
+      </div>
 
       <div class="rev-toggle-row">
         <button class="active" data-revtype="hall">HALL</button>
@@ -446,14 +496,19 @@
    СОСТОЯНИЕ И ПАРАМЕТРЫ
    ===================================================== */
 const params = {
+  gateThreshold: 0.2,
   compGain: 0.5,
   delayMix: 0.3, delayFb: 0.4, delayTime: 0.4,
   revMix: 0.3, revDecay: 0.5
 };
 
-let fxStates = { eq: true, comp: true, delay: false, reverb: false };
+// По умолчанию все педали выключены
+let fxStates = { gate: false, eq: false, comp: false, delay: false, reverb: false };
 let delayType = 'tap';
 let reverbType = 'hall';
+
+// Массив для хранения порядка педалей
+let pedalOrder = ['gate', 'eq', 'comp', 'delay', 'reverb'];
 
 let audioCtx = null;
 let stream = null;
@@ -467,6 +522,7 @@ const refreshBtn   = document.getElementById('refreshBtn');
 const ledEl        = document.getElementById('led');
 const statusText   = document.getElementById('statusText');
 const ipTitle      = document.querySelector('.ip-title');
+const pedalboardInner = document.getElementById('pedalboardInner');
 
 /* =====================================================
    ГЕНЕРАЦИЯ ИМПУЛЬСНЫХ ОТКЛИКОВ (IR)
@@ -490,7 +546,7 @@ function makeIR(ctx, type, decayFactor) {
       } else if (type === 'hall') {
         env = Math.pow(1 - t, 1.8);
         data[i] = n * env;
-      } else { // chamber
+      } else {
         env = Math.pow(1 - t, 3.5);
         data[i] = n * env;
       }
@@ -505,9 +561,40 @@ function makeIR(ctx, type, decayFactor) {
 function buildChain() {
   const ctx = audioCtx;
   chain.input = ctx.createGain();
+  chain.output = ctx.createGain();
+  chain.output.connect(ctx.destination);
   
-  // --- 1. EQ (10 BANDS) ---
-  chain.eqFilters = [];
+  chain.pedals = {};
+
+  // --- 1. GATE ---
+  chain.pedals.gate = { input: ctx.createGain(), output: ctx.createGain() };
+  const g = chain.pedals.gate;
+  g.dry = ctx.createGain();
+  g.wet = ctx.createGain();
+  g.gateNode = ctx.createGain(); // Узел для затухания
+  
+  g.input.connect(g.dry);
+  g.dry.connect(g.output);
+  
+  g.input.connect(g.gateNode);
+  g.gateNode.connect(g.wet);
+  g.wet.connect(g.output);
+
+  // Анализатор для гейтера
+  chain.gateAnalyser = ctx.createAnalyser();
+  chain.gateAnalyser.fftSize = 256;
+  g.input.connect(chain.gateAnalyser);
+
+  // --- 2. EQ ---
+  chain.pedals.eq = { input: ctx.createGain(), output: ctx.createGain() };
+  const eq = chain.pedals.eq;
+  eq.dry = ctx.createGain();
+  eq.wet = ctx.createGain();
+  
+  eq.input.connect(eq.dry);
+  eq.dry.connect(eq.output);
+  
+  eq.filters = [];
   const freqs = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
   freqs.forEach(f => {
     const filter = ctx.createBiquadFilter();
@@ -515,109 +602,128 @@ function buildChain() {
     filter.frequency.value = f;
     filter.Q.value = 1.0;
     filter.gain.value = 0;
-    chain.eqFilters.push(filter);
+    eq.filters.push(filter);
   });
   
-  chain.eqIn = ctx.createGain();
-  chain.eqOut = ctx.createGain();
-  
-  let prev = chain.eqIn;
-  chain.eqFilters.forEach(f => { prev.connect(f); prev = f; });
-  prev.connect(chain.eqOut);
+  let prev = eq.input;
+  eq.filters.forEach(f => { prev.connect(f); prev = f; });
+  prev.connect(eq.wet);
+  eq.wet.connect(eq.output);
 
-  // --- 2. COMPRESSOR (RVox Style) ---
-  chain.compIn = ctx.createGain();
-  chain.compNode = ctx.createDynamicsCompressor();
-  chain.compNode.threshold.value = -24;
-  chain.compNode.knee.value = 5;
-  chain.compNode.ratio.value = 12;
-  chain.compNode.attack.value = 0.005;
-  chain.compNode.release.value = 0.1;
-  chain.compOut = ctx.createGain();
+  // --- 3. COMPRESSOR ---
+  chain.pedals.comp = { input: ctx.createGain(), output: ctx.createGain() };
+  const comp = chain.pedals.comp;
+  comp.dry = ctx.createGain();
+  comp.wet = ctx.createGain();
+  comp.pre = ctx.createGain();
   
-  chain.compIn.connect(chain.compNode);
-  chain.compNode.connect(chain.compOut);
+  comp.node = ctx.createDynamicsCompressor();
+  comp.node.threshold.value = -24;
+  comp.node.knee.value = 5;
+  comp.node.ratio.value = 12;
+  comp.node.attack.value = 0.005;
+  comp.node.release.value = 0.1;
+  
+  comp.input.connect(comp.dry);
+  comp.dry.connect(comp.output);
+  
+  comp.input.connect(comp.pre);
+  comp.pre.connect(comp.node);
+  comp.node.connect(comp.wet);
+  comp.wet.connect(comp.output);
 
-  // --- 3. DELAY ---
-  chain.delayIn = ctx.createGain();
-  chain.delayOut = ctx.createGain();
+  // --- 4. DELAY ---
+  chain.pedals.delay = { input: ctx.createGain(), output: ctx.createGain() };
+  const delay = chain.pedals.delay;
+  delay.dry = ctx.createGain();
+  delay.wet = ctx.createGain();
   
-  chain.delayDry = ctx.createGain();
-  chain.delayWet = ctx.createGain();
+  delay.L = ctx.createDelay(2.0);
+  delay.R = ctx.createDelay(2.0);
+  delay.FbL = ctx.createGain();
+  delay.FbR = ctx.createGain();
   
-  chain.delayL = ctx.createDelay(2.0);
-  chain.delayR = ctx.createDelay(2.0);
-  chain.delayFbL = ctx.createGain();
-  chain.delayFbR = ctx.createGain();
+  delay.input.connect(delay.dry);
+  delay.dry.connect(delay.output);
+  delay.input.connect(delay.wet);
   
-  chain.delayIn.connect(chain.delayDry);
-  chain.delayDry.connect(chain.delayOut);
+  delay.L.connect(delay.FbL);
+  delay.R.connect(delay.FbR);
   
-  chain.delayIn.connect(chain.delayWet);
+  delay.Split = ctx.createChannelSplitter(2);
+  delay.Merge = ctx.createChannelMerger(2);
   
-  chain.delayL.connect(chain.delayFbL);
-  chain.delayR.connect(chain.delayFbR);
+  delay.input.connect(delay.Split);
   
-  chain.delaySplit = ctx.createChannelSplitter(2);
-  chain.delayMerge = ctx.createChannelMerger(2);
+  delay.tapSendL = ctx.createGain();
+  delay.tapSendR = ctx.createGain();
+  delay.Split.connect(delay.tapSendL, 0);
+  delay.Split.connect(delay.tapSendR, 1);
   
-  chain.delayIn.connect(chain.delaySplit);
+  delay.tapSendL.connect(delay.L);
+  delay.tapSendR.connect(delay.R);
   
-  chain.tapSendL = ctx.createGain();
-  chain.tapSendR = ctx.createGain();
-  chain.delaySplit.connect(chain.tapSendL, 0);
-  chain.delaySplit.connect(chain.tapSendR, 1);
-  
-  chain.tapSendL.connect(chain.delayL);
-  chain.tapSendR.connect(chain.delayR);
-  
-  chain.delayL.connect(chain.delayMerge, 0, 0);
-  chain.delayR.connect(chain.delayMerge, 0, 1);
+  delay.L.connect(delay.Merge, 0, 0);
+  delay.R.connect(delay.Merge, 0, 1);
 
-  chain.ppSendL = ctx.createGain();
-  chain.ppSendR = ctx.createGain();
-  chain.delaySplit.connect(chain.ppSendL, 0);
-  chain.delaySplit.connect(chain.ppSendR, 1);
+  delay.ppSendL = ctx.createGain();
+  delay.ppSendR = ctx.createGain();
+  delay.Split.connect(delay.ppSendL, 0);
+  delay.Split.connect(delay.ppSendR, 1);
   
-  chain.ppSendL.connect(chain.delayL);
-  chain.ppSendR.connect(chain.delayR);
+  delay.ppSendL.connect(delay.L);
+  delay.ppSendR.connect(delay.R);
   
-  chain.delayL.connect(chain.delayFbR);
-  chain.delayR.connect(chain.delayFbL);
+  delay.L.connect(delay.FbR);
+  delay.R.connect(delay.FbL);
   
-  chain.delayFbL.connect(chain.delayL);
-  chain.delayFbR.connect(chain.delayR);
+  delay.FbL.connect(delay.L);
+  delay.FbR.connect(delay.R);
 
-  chain.delayMerge.connect(chain.delayWet);
-  chain.delayWet.connect(chain.delayOut);
+  delay.Merge.connect(delay.wet);
+  delay.wet.connect(delay.output);
   
-  chain.tapSendL.gain.value = 1;
-  chain.tapSendR.gain.value = 1;
-  chain.ppSendL.gain.value = 0;
-  chain.ppSendR.gain.value = 0;
+  delay.tapSendL.gain.value = 1;
+  delay.tapSendR.gain.value = 1;
+  delay.ppSendL.gain.value = 0;
+  delay.ppSendR.gain.value = 0;
 
-  // --- 4. REVERB ---
-  chain.revIn = ctx.createGain();
-  chain.revOut = ctx.createGain();
-  chain.revDry = ctx.createGain();
-  chain.revWet = ctx.createGain();
-  chain.conv = ctx.createConvolver();
+  // --- 5. REVERB ---
+  chain.pedals.reverb = { input: ctx.createGain(), output: ctx.createGain() };
+  const rev = chain.pedals.reverb;
+  rev.dry = ctx.createGain();
+  rev.wet = ctx.createGain();
+  rev.conv = ctx.createConvolver();
   
-  chain.revIn.connect(chain.revDry);
-  chain.revDry.connect(chain.revOut);
+  rev.input.connect(rev.dry);
+  rev.dry.connect(rev.output);
   
-  chain.revIn.connect(chain.conv);
-  chain.conv.connect(chain.revWet);
-  chain.revWet.connect(chain.revOut);
+  rev.input.connect(rev.conv);
+  rev.conv.connect(rev.wet);
+  rev.wet.connect(rev.output);
 
-  // --- СОЕДИНЕНИЕ ЦЕПИ ---
-  chain.input.connect(chain.eqIn);
-  chain.eqOut.connect(chain.compIn);
-  chain.compOut.connect(chain.delayIn);
-  chain.delayOut.connect(chain.revIn);
-  chain.revOut.connect(ctx.destination);
-
+  // --- ДИНАМИЧЕСКОЕ СОЕДИНЕНИЕ ---
+  rebuildAudioConnections();
   applyAll();
+}
+
+function rebuildAudioConnections() {
+  if (!audioCtx || !chain.pedals) return;
+  
+  // Отключаем всё
+  chain.input.disconnect();
+  Object.values(chain.pedals).forEach(p => p.output.disconnect());
+  
+  // Строим цепь заново
+  let prev = chain.input;
+  pedalOrder.forEach(id => {
+    const pedal = chain.pedals[id];
+    if (pedal) {
+      prev.connect(pedal.input);
+      prev = pedal.output;
+    }
+  });
+  prev.connect(chain.output);
 }
 
 /* =====================================================
@@ -628,41 +734,97 @@ function applyAll() {
   const t = audioCtx.currentTime;
   const S = 0.05;
 
-  // EQ
-  const eqS = fxStates.eq ? 1 : 0;
-  chain.eqIn.gain.setTargetAtTime(eqS, t, S);
+  // Gate (пока только UI порог, сам процесс в setInterval)
+  document.getElementById('gateThresholdLine').style.left = (params.gateThreshold * 100) + '%';
 
-  // Compressor
+  // EQ Bypass
+  const eqS = fxStates.eq ? 1 : 0;
+  chain.pedals.eq.dry.gain.setTargetAtTime(1 - eqS, t, S);
+  chain.pedals.eq.wet.gain.setTargetAtTime(eqS, t, S);
+
+  // Compressor Bypass
   const compS = fxStates.comp ? 1 : 0;
-  chain.compIn.gain.setTargetAtTime(compS, t, S);
-  
   const cGain = Math.pow(params.compGain, 2) * 15;
-  chain.compIn.gain.setTargetAtTime(compS * cGain, t, S);
-  chain.compOut.gain.setTargetAtTime(compS * (1 / Math.sqrt(cGain)), t, S);
+  chain.pedals.comp.dry.gain.setTargetAtTime(1 - compS, t, S);
+  chain.pedals.comp.pre.gain.setTargetAtTime(cGain, t, S);
+  chain.pedals.comp.wet.gain.setTargetAtTime(compS * (1 / Math.sqrt(cGain)), t, S);
   
-  // Delay
+  // Delay Bypass
   const delayS = fxStates.delay ? 1 : 0;
-  chain.delayDry.gain.setTargetAtTime(delayS ? 1 - params.delayMix : 1, t, S);
-  chain.delayWet.gain.setTargetAtTime(delayS ? params.delayMix : 0, t, S);
+  chain.pedals.delay.dry.gain.setTargetAtTime(delayS ? 1 - params.delayMix : 1, t, S);
+  chain.pedals.delay.wet.gain.setTargetAtTime(delayS ? params.delayMix : 0, t, S);
   
   const fb = params.delayFb * 0.8;
   const time = 0.05 + params.delayTime * 0.95;
-  
-  chain.delayFbL.gain.setTargetAtTime(fb, t, S);
-  chain.delayFbR.gain.setTargetAtTime(fb, t, S);
-  chain.delayL.delayTime.setTargetAtTime(time, t, S);
-  chain.delayR.delayTime.setTargetAtTime(time * (delayType === 'pingpong' ? 2 : 1), t, S);
+  chain.pedals.delay.FbL.gain.setTargetAtTime(fb, t, S);
+  chain.pedals.delay.FbR.gain.setTargetAtTime(fb, t, S);
+  chain.pedals.delay.L.delayTime.setTargetAtTime(time, t, S);
+  chain.pedals.delay.R.delayTime.setTargetAtTime(time * (delayType === 'pingpong' ? 2 : 1), t, S);
 
-  // Reverb
+  // Reverb Bypass
   const revS = fxStates.reverb ? 1 : 0;
-  chain.revDry.gain.setTargetAtTime(revS ? 1 - params.revMix : 1, t, S);
-  chain.revWet.gain.setTargetAtTime(revS ? params.revMix : 0, t, S);
+  chain.pedals.reverb.dry.gain.setTargetAtTime(revS ? 1 - params.revMix : 1, t, S);
+  chain.pedals.reverb.wet.gain.setTargetAtTime(revS ? params.revMix : 0, t, S);
 }
 
 function updateReverbIR() {
   if (!audioCtx) return;
-  chain.conv.buffer = makeIR(audioCtx, reverbType, params.revDecay);
+  chain.pedals.reverb.conv.buffer = makeIR(audioCtx, reverbType, params.revDecay);
 }
+
+/* =====================================================
+   DRAG & DROP
+   ===================================================== */
+let draggedPedal = null;
+
+document.querySelectorAll('.pedal').forEach(pedal => {
+  pedal.addEventListener('dragstart', (e) => {
+    draggedPedal = pedal;
+    pedal.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    // Нужно установить какие-то данные для Firefox
+    e.dataTransfer.setData('text/plain', pedal.dataset.pedalId);
+  });
+
+  pedal.addEventListener('dragend', () => {
+    pedal.classList.remove('dragging');
+    document.querySelectorAll('.pedal').forEach(p => p.classList.remove('drag-over'));
+    draggedPedal = null;
+    
+    // Обновляем порядок в массиве на основе DOM
+    const newOrder = Array.from(pedalboardInner.children).map(el => el.dataset.pedalId);
+    if (JSON.stringify(pedalOrder) !== JSON.stringify(newOrder)) {
+      pedalOrder = newOrder;
+      rebuildAudioConnections();
+    }
+  });
+
+  pedal.addEventListener('dragover', (e) => {
+    e.preventDefault(); // Разрешаем drop
+    e.dataTransfer.dropEffect = 'move';
+    
+    if (draggedPedal && draggedPedal !== pedal) {
+      // Визуальная подсказка
+      document.querySelectorAll('.pedal').forEach(p => p.classList.remove('drag-over'));
+      pedal.classList.add('drag-over');
+      
+      // Логика перестановки
+      const children = Array.from(pedalboardInner.children);
+      const dragIndex = children.indexOf(draggedPedal);
+      const hoverIndex = children.indexOf(pedal);
+      
+      if (dragIndex < hoverIndex) {
+        pedalboardInner.insertBefore(draggedPedal, pedal.nextSibling);
+      } else {
+        pedalboardInner.insertBefore(draggedPedal, pedal);
+      }
+    }
+  });
+
+  pedal.addEventListener('dragleave', () => {
+    pedal.classList.remove('drag-over');
+  });
+});
 
 /* =====================================================
    УПРАВЛЕНИЕ (ИНТЕРФЕЙС)
@@ -716,8 +878,8 @@ document.querySelectorAll('.knob').forEach(el => {
 document.querySelectorAll('input[data-eq]').forEach((el, idx) => {
   el.addEventListener('input', (e) => {
     const val = parseFloat(e.target.value);
-    if (chain.eqFilters && chain.eqFilters[idx]) {
-      chain.eqFilters[idx].gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
+    if (chain.pedals.eq && chain.pedals.eq.filters[idx]) {
+      chain.pedals.eq.filters[idx].gain.setTargetAtTime(val, audioCtx.currentTime, 0.05);
     }
   });
 });
@@ -731,17 +893,18 @@ document.querySelectorAll('[data-delaytype]').forEach(btn => {
     
     if (!audioCtx) return;
     const t = audioCtx.currentTime;
+    const delay = chain.pedals.delay;
     
     if (delayType === 'tap') {
-      chain.tapSendL.gain.setTargetAtTime(1, t, 0.05);
-      chain.tapSendR.gain.setTargetAtTime(1, t, 0.05);
-      chain.ppSendL.gain.setTargetAtTime(0, t, 0.05);
-      chain.ppSendR.gain.setTargetAtTime(0, t, 0.05);
+      delay.tapSendL.gain.setTargetAtTime(1, t, 0.05);
+      delay.tapSendR.gain.setTargetAtTime(1, t, 0.05);
+      delay.ppSendL.gain.setTargetAtTime(0, t, 0.05);
+      delay.ppSendR.gain.setTargetAtTime(0, t, 0.05);
     } else {
-      chain.tapSendL.gain.setTargetAtTime(0, t, 0.05);
-      chain.tapSendR.gain.setTargetAtTime(0, t, 0.05);
-      chain.ppSendL.gain.setTargetAtTime(1, t, 0.05);
-      chain.ppSendR.gain.setTargetAtTime(0, t, 0.05);
+      delay.tapSendL.gain.setTargetAtTime(0, t, 0.05);
+      delay.tapSendR.gain.setTargetAtTime(0, t, 0.05);
+      delay.ppSendL.gain.setTargetAtTime(1, t, 0.05);
+      delay.ppSendR.gain.setTargetAtTime(0, t, 0.05);
     }
     applyAll();
   });
@@ -1046,8 +1209,8 @@ async function startRecording() {
   mediaDest = audioCtx.createMediaStreamDestination();
   analyserNode = audioCtx.createAnalyser(); analyserNode.fftSize = 1024;
 
-  chain.revOut.connect(mediaDest);
-  chain.revOut.connect(analyserNode);
+  chain.output.connect(mediaDest);
+  chain.output.connect(analyserNode);
 
   let options = { mimeType: 'audio/webm' };
   if (!MediaRecorder.isTypeSupported('audio/webm')) options = { mimeType: 'audio/ogg' };
@@ -1093,9 +1256,9 @@ async function stopRecording() {
 
   if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
 
-  if (chain.revOut) {
-    try { chain.revOut.disconnect(mediaDest); } catch(e){}
-    try { chain.revOut.disconnect(analyserNode); } catch(e){}
+  if (chain.output) {
+    try { chain.output.disconnect(mediaDest); } catch(e){}
+    try { chain.output.disconnect(analyserNode); } catch(e){}
   }
   recStatus.textContent = 'Обработка...'; recStatus.style.color = '#ccc';
 }
@@ -1119,20 +1282,71 @@ refreshDevices();
   updateFolderLabel();
 })();
 
-// Индикатор компрессора
+/* =====================================================
+   ГЕЙТЕР (ЛОГИКА) И VU-МЕТРЫ
+   ===================================================== */
+let gateData = null;
+
 setInterval(() => {
-  if (!isOn || !chain.compNode || !fxStates.comp) {
-    document.getElementById('compVU').style.width = '0%';
-    return;
+  if (!isOn || !audioCtx) return;
+
+  const t = audioCtx.currentTime;
+
+  // 1. Обновление гейтера
+  if (chain.gateAnalyser) {
+    if (!gateData) gateData = new Uint8Array(chain.gateAnalyser.fftSize);
+    chain.gateAnalyser.getByteTimeDomainData(gateData);
+    
+    // Вычисляем RMS (среднеквадратичное значение) для определения громкости
+    let sum = 0;
+    for (let i = 0; i < gateData.length; i++) {
+      const v = (gateData[i] - 128) / 128;
+      sum += v * v;
+    }
+    const rms = Math.sqrt(sum / gateData.length);
+    
+    // Обновляем визуальный индикатор
+    const vuBar = document.getElementById('gateVU');
+    if (vuBar) vuBar.style.width = Math.min(100, rms * 300) + '%';
+
+    // Логика срабатывания гейтера (если педаль включена)
+    if (fxStates.gate) {
+      // Порог: 0 = открыт всегда, 1 = закрыт всегда
+      // Умножаем на 0.2, чтобы сделать диапазон более чувствительным
+      const threshold = params.gateThreshold * 0.1; 
+      
+      if (rms < threshold) {
+        // Сигнал тише порога -> закрываем гейт
+        chain.pedals.gate.gateNode.gain.setTargetAtTime(0, t, 0.01);
+      } else {
+        // Сигнал громче порога -> открываем гейт
+        chain.pedals.gate.gateNode.gain.setTargetAtTime(1, t, 0.01);
+      }
+      
+      // Включаем wet путь, выключаем dry
+      chain.pedals.gate.dry.gain.setTargetAtTime(0, t, 0.05);
+      chain.pedals.gate.wet.gain.setTargetAtTime(1, t, 0.05);
+    } else {
+      // Гейтер выключен (bypass)
+      chain.pedals.gate.dry.gain.setTargetAtTime(1, t, 0.05);
+      chain.pedals.gate.wet.gain.setTargetAtTime(0, t, 0.05);
+    }
   }
-  if(analyserNode) {
+
+  // 2. Обновление компрессора
+  if (chain.pedals.comp && fxStates.comp && analyserNode) {
+    // Используем анализатор записи или создаем отдельный, если его нет
+    // Для простоты используем данные из главного анализатора
     let data = new Uint8Array(analyserNode.frequencyBinCount);
     analyserNode.getByteFrequencyData(data);
     let sum = data.reduce((a,b) => a+b, 0);
     let avg = sum / data.length;
     let percent = Math.min(100, (avg / 255) * 150); 
     document.getElementById('compVU').style.width = percent + '%';
+  } else {
+    document.getElementById('compVU').style.width = '0%';
   }
+
 }, 50);
 
 </script>
