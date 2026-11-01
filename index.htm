@@ -529,8 +529,9 @@ const pedalboardInner = document.getElementById('pedalboardInner');
    ===================================================== */
 function makeIR(ctx, type, decayFactor) {
   const rate = ctx.sampleRate;
-  let baseLen = type === 'hall' ? 3.0 : type === 'plate' ? 2.0 : 1.2;
-  const len = Math.floor(rate * baseLen * (0.2 + decayFactor * 1.5));
+  // Ограничили максимальную длину, чтобы не нагружать процессор и не вызывать задержку
+  let baseLen = type === 'hall' ? 1.5 : type === 'plate' ? 1.0 : 0.8;
+  const len = Math.floor(rate * baseLen * (0.2 + decayFactor * 1.2));
   
   const buf = ctx.createBuffer(2, len, rate);
   for (let ch = 0; ch < 2; ch++) {
@@ -782,7 +783,6 @@ document.querySelectorAll('.pedal').forEach(pedal => {
     draggedPedal = pedal;
     pedal.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    // Нужно установить какие-то данные для Firefox
     e.dataTransfer.setData('text/plain', pedal.dataset.pedalId);
   });
 
@@ -791,7 +791,6 @@ document.querySelectorAll('.pedal').forEach(pedal => {
     document.querySelectorAll('.pedal').forEach(p => p.classList.remove('drag-over'));
     draggedPedal = null;
     
-    // Обновляем порядок в массиве на основе DOM
     const newOrder = Array.from(pedalboardInner.children).map(el => el.dataset.pedalId);
     if (JSON.stringify(pedalOrder) !== JSON.stringify(newOrder)) {
       pedalOrder = newOrder;
@@ -800,15 +799,13 @@ document.querySelectorAll('.pedal').forEach(pedal => {
   });
 
   pedal.addEventListener('dragover', (e) => {
-    e.preventDefault(); // Разрешаем drop
+    e.preventDefault(); 
     e.dataTransfer.dropEffect = 'move';
     
     if (draggedPedal && draggedPedal !== pedal) {
-      // Визуальная подсказка
       document.querySelectorAll('.pedal').forEach(p => p.classList.remove('drag-over'));
       pedal.classList.add('drag-over');
       
-      // Логика перестановки
       const children = Array.from(pedalboardInner.children);
       const dragIndex = children.indexOf(draggedPedal);
       const hoverIndex = children.indexOf(pedal);
@@ -851,7 +848,7 @@ document.querySelectorAll('.knob').forEach(el => {
     applyAll();
     if (param === 'revDecay') {
       clearTimeout(window.revDebounce);
-      window.revDebounce = setTimeout(updateReverbIR, 100);
+      window.revDebounce = setTimeout(updateReverbIR, 150);
     }
   }
 
@@ -971,7 +968,8 @@ async function startAudio() {
   stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
 
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // ИСПОЛЬЗУЕМ interactive ДЛЯ МИНИМИЗАЦИИ ЗАДЕРЖКИ
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
     buildChain();
     updateReverbIR();
   }
@@ -1312,7 +1310,6 @@ setInterval(() => {
     // Логика срабатывания гейтера (если педаль включена)
     if (fxStates.gate) {
       // Порог: 0 = открыт всегда, 1 = закрыт всегда
-      // Умножаем на 0.2, чтобы сделать диапазон более чувствительным
       const threshold = params.gateThreshold * 0.1; 
       
       if (rms < threshold) {
@@ -1335,8 +1332,6 @@ setInterval(() => {
 
   // 2. Обновление компрессора
   if (chain.pedals.comp && fxStates.comp && analyserNode) {
-    // Используем анализатор записи или создаем отдельный, если его нет
-    // Для простоты используем данные из главного анализатора
     let data = new Uint8Array(analyserNode.frequencyBinCount);
     analyserNode.getByteFrequencyData(data);
     let sum = data.reduce((a,b) => a+b, 0);
